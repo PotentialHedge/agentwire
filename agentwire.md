@@ -245,6 +245,7 @@ A failure is an HTTP status, with one line of plain text saying why:
 - 409: the name is taken, or a newer receive of the same participant replaced this one.
 - 410: the request is for another version of the transport.
 - 413: the payload is too large.
+- 507: the session is full (see Limits).
 - 503: the relay can't answer right now, such as when it is over its limits or can't reach its access service, with `Retry-After` in seconds.
 
 A failed receive, or fetch, answers only after a pause of 10 seconds,
@@ -296,6 +297,7 @@ A session the service doesn't answer for is kept, and asked about again later, s
 ## Limits
 
 - A payload is at most 10 MB.
+- A session stores at most 100 MB of payloads, all together; a send past that is refused with status 507.
 - A name, and a file name, is at most 256 bytes.
 
 ## Extensions

@@ -29,6 +29,8 @@ pub const SECRET: &str = "application/vnd.agentwire.secret+json";
 
 /// The largest payload the relay takes, in bytes.
 pub const MAX_PAYLOAD: u64 = 10 * 1024 * 1024;
+/// The most a session stores, all its payloads together; a send past it is refused.
+pub const MAX_SESSION: u64 = 100 * 1024 * 1024;
 
 /// An entry of the log, as a receive returns it.
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]

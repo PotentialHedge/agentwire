@@ -525,6 +525,19 @@ impl Sessions {
         payload: &[u8],
     ) -> Result<i64, Fail> {
         let name = self.inside(session, secret)?;
+        let stored: i64 = self
+            .db
+            .prepare_cached("SELECT COALESCE(SUM(size), 0) FROM entries WHERE session = ?")?
+            .query_row([session], |row| row.get(0))?;
+        if stored as u64 + payload.len() as u64 > agentwire::MAX_SESSION {
+            return Err(fail(
+                507,
+                format!(
+                    "the session is full: it stores at most {} bytes",
+                    agentwire::MAX_SESSION
+                ),
+            ));
+        }
         let n = self.append(session, &name, kind, payload, filename)?;
         self.look(session)?;
         Ok(n)
@@ -893,6 +906,28 @@ mod tests {
         assert!(sessions.expire_after(0, 60).is_ok());
         assert!(sessions.enter(&unjoined).is_err());
         assert!(sessions.enter(&joined).is_ok());
+    }
+
+    #[test]
+    fn a_full_session_takes_no_more() {
+        let mut sessions = Sessions::open(None).unwrap();
+        let session = sessions.create(false).ok().unwrap();
+        let link = sessions
+            .join(&session, Some("luis"), "link", None, None)
+            .ok()
+            .unwrap()
+            .link;
+        let secret = link.rsplit('/').next().unwrap().to_owned();
+        let chunk = vec![0u8; agentwire::MAX_PAYLOAD as usize];
+        for _ in 0..agentwire::MAX_SESSION / agentwire::MAX_PAYLOAD {
+            assert!(
+                sessions
+                    .send(&session, &secret, "application/octet-stream", None, &chunk)
+                    .is_ok()
+            );
+        }
+        let full = sessions.send(&session, &secret, "application/octet-stream", None, b"x");
+        assert_eq!(full.err().map(|f| f.status.as_u16()), Some(507));
     }
 
     #[test]
