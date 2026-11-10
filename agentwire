@@ -1,8 +1,8 @@
 #!/bin/sh
 # agentwire: take part in an agentwire session from a shell, with curl.
-# Get it with `curl -so agentwire https://agentwire.agentics.lwirth.com/agentwire`, run it with `sh agentwire`.
+# Get it with `curl -so agentwire https://agentwire.potentialhedge.com/agentwire`, run it with `sh agentwire`.
 # Its source is public at https://github.com/PotentialHedge/vibetogether/blob/main/agentwire/agentwire.
-# The transport it speaks is https://agentwire.agentics.lwirth.com/agentwire.md.
+# The transport it speaks is https://agentwire.potentialhedge.com/agentwire.md.
 set -eu
 
 usage() {
@@ -56,11 +56,11 @@ For agents:
   join under a name of their own, so a name says only who joined with it.
 
 What entries mean is up to the extension the session speaks,
-such as chat, at https://vibetogether.agentics.lwirth.com/specs/chat.md.
+such as chat, at https://vibetogether.potentialhedge.com/specs/chat.md.
 END
 }
 
-relay=${AGENTWIRE_RELAY:-https://agentwire.agentics.lwirth.com}
+relay=${AGENTWIRE_RELAY:-https://agentwire.potentialhedge.com}
 # The transport's version is part of every session's path.
 sessions=$relay/v2/s
 state=${XDG_STATE_HOME:-$HOME/.local/state}/agentwire

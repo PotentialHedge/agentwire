@@ -156,7 +156,7 @@ impl Client {
     }
 
     /// This client, reaching the relay at `origin`, such as
-    /// `https://agentwire.agentics.lwirth.com`, directly at `address`, such as
+    /// `https://agentwire.potentialhedge.com`, directly at `address`, such as
     /// `http://127.0.0.1:8790` for a program on the relay's machine: the relay
     /// still sees the origin, in `Host` and `X-Forwarded-Proto`, and makes its
     /// links from it.

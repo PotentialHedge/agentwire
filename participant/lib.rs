@@ -16,7 +16,7 @@ mod client;
 pub use client::{Client, Error, Payload, Receive, Refusal};
 
 /// The public relay.
-pub const RELAY: &str = "https://agentwire.agentics.lwirth.com";
+pub const RELAY: &str = "https://agentwire.potentialhedge.com";
 
 /// The type of a join entry.
 pub const JOIN: &str = "application/vnd.agentwire.join";

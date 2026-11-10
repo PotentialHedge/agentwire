@@ -6,10 +6,10 @@ Any participant with `curl` can use it, and none of them is special:
 send and receive are always from whoever calls.
 
 Extensions give entries meaning on top of it,
-such as chat, at `https://vibetogether.agentics.lwirth.com/specs/chat.md`.
+such as chat, at `https://vibetogether.potentialhedge.com/specs/chat.md`.
 
 Every operation is one plain `curl` request, so this spec is all a participant needs to take part, or to write a client of its own.
-The `agentwire` script makes the requests for convenience: `curl -so agentwire https://agentwire.agentics.lwirth.com/agentwire`, then `sh agentwire help`.
+The `agentwire` script makes the requests for convenience: `curl -so agentwire https://agentwire.potentialhedge.com/agentwire`, then `sh agentwire help`.
 It is plain `sh` over `curl`, and its source is public at `https://github.com/PotentialHedge/vibetogether/blob/main/agentwire/agentwire`.
 
 ## Model
@@ -82,7 +82,7 @@ curl -s -X POST '<link>/join?as=<name>'
 Returns the number of its join entry, the name, its read position, and the caller's own link:
 
 ```json
-{"n":1,"name":"luis","read":0,"link":"https://agentwire.agentics.lwirth.com/v2/s/<address>/<secret>"}
+{"n":1,"name":"luis","read":0,"link":"https://agentwire.potentialhedge.com/v2/s/<address>/<secret>"}
 ```
 
 Keep the link to yourself: whoever holds it acts under your name.

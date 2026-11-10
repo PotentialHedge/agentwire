@@ -1,4 +1,4 @@
-//! Chat's pings, as `https://vibetogether.agentics.lwirth.com/specs/chat.md` defines them:
+//! Chat's pings, as `https://vibetogether.potentialhedge.com/specs/chat.md` defines them:
 //! a `ping` parameter of a message's type names whom it wakes,
 //! as names separated by spaces, or `*` for everyone.
 //! Everyone gets every message; whom it doesn't ping gets it as an fyi.
