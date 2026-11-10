@@ -443,9 +443,11 @@ fn origin(headers: &HeaderMap, origins: &[String]) -> String {
     };
     let host = header(HOST.as_str()).unwrap_or("localhost");
     if let Some(canonical) = origins.first() {
-        let reached = origins
-            .iter()
-            .find(|origin| origin.split_once("://").is_some_and(|(_, h)| h.eq_ignore_ascii_case(host)));
+        let reached = origins.iter().find(|origin| {
+            origin
+                .split_once("://")
+                .is_some_and(|(_, h)| h.eq_ignore_ascii_case(host))
+        });
         return reached.unwrap_or(canonical).clone();
     }
     let scheme = header("x-forwarded-proto").unwrap_or("http");
