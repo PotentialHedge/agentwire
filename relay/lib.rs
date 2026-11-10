@@ -118,6 +118,12 @@ pub struct Options {
     /// The bytes that stay free on the database's filesystem: below them,
     /// the relay refuses whatever adds to it.
     pub min_free: Option<u64>,
+    /// The origins the relay is served at, such as `https://agentwire.example`,
+    /// the canonical one first. A link starts with the one whose host the caller
+    /// reached, or else the canonical one, so that no `Host` header a proxy lets
+    /// through ends up in a link. Without any, a link starts with the origin as
+    /// reached, as on a developer's machine.
+    pub origins: Vec<String>,
 }
 
 pub struct Relay {
@@ -127,6 +133,7 @@ pub struct Relay {
     min_free: Option<u64>,
     files: Option<PathBuf>,
     access: Option<Access>,
+    origins: Vec<String>,
 }
 
 impl Relay {
@@ -138,6 +145,7 @@ impl Relay {
             min_free: options.min_free,
             files: options.files,
             access: options.access.as_deref().map(Access::new),
+            origins: options.origins,
         }))
     }
 
@@ -425,16 +433,22 @@ fn number(text: &str) -> Option<i64> {
         .then(|| text.parse().unwrap_or(i64::MAX))
 }
 
-/// The origin the caller reached the relay at, which every link it gets
-/// starts with.
-fn origin(headers: &HeaderMap) -> String {
+/// The origin every link the caller gets starts with: of `origins`, the one
+/// whose host it reached, or else the first; without any, the origin as reached.
+fn origin(headers: &HeaderMap, origins: &[String]) -> String {
     let header = |name| {
         headers
             .get(name)
             .and_then(|value: &HeaderValue| value.to_str().ok())
     };
-    let scheme = header("x-forwarded-proto").unwrap_or("http");
     let host = header(HOST.as_str()).unwrap_or("localhost");
+    if let Some(canonical) = origins.first() {
+        let reached = origins
+            .iter()
+            .find(|origin| origin.split_once("://").is_some_and(|(_, h)| h.eq_ignore_ascii_case(host)));
+        return reached.unwrap_or(canonical).clone();
+    }
+    let scheme = header("x-forwarded-proto").unwrap_or("http");
     format!("{scheme}://{host}")
 }
 
@@ -512,7 +526,7 @@ fn gone(origin: &str) -> Fail {
 
 async fn route(relay: &Relay, client: Option<Client>, request: Request) -> Result<Response, Fail> {
     let (parts, body) = request.into_parts();
-    let origin = origin(&parts.headers);
+    let origin = origin(&parts.headers, &relay.origins);
     let query = parts.uri.query().unwrap_or("");
     let segments: Vec<&str> = parts.uri.path().split('/').skip(1).collect();
     let get = parts.method == Method::GET;

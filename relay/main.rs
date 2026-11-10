@@ -5,7 +5,8 @@
 //! as the repository's root is for `just dev`. With `AGENTWIRE_ACCESS`, it asks
 //! the access service at that URL who may be in a session, and which sessions last.
 //! With `AGENTWIRE_MIN_FREE`, in bytes, it refuses whatever adds to the database
-//! once its filesystem has less free.
+//! once its filesystem has less free. `AGENTWIRE_ORIGINS`, separated by commas,
+//! the canonical one first, are the origins its links start with.
 
 use std::env;
 use std::error::Error;
@@ -27,11 +28,18 @@ async fn main() -> Result<(), Box<dyn Error>> {
         Ok(bytes) => Some(bytes.parse()?),
         Err(_) => None,
     };
+    let origins = env::var("AGENTWIRE_ORIGINS")
+        .unwrap_or_default()
+        .split(',')
+        .map(|origin| origin.trim().trim_end_matches('/').to_owned())
+        .filter(|origin| !origin.is_empty())
+        .collect();
     let relay = Relay::open(Options {
         database,
         files: Some(files),
         access,
         min_free,
+        origins,
     })?;
     tokio::spawn(relay.clone().expire());
     let listener = TcpListener::bind(&address).await?;

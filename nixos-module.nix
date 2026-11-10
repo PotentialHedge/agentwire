@@ -22,6 +22,12 @@ in {
       example = "http://127.0.0.1:8793/agentwire";
       description = "The access service's URL, which decides who may be in a session and which sessions last; without one, whoever holds a link joins.";
     };
+    origins = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [];
+      example = ["https://agentwire.example.com" "https://agentwire.example.org"];
+      description = "The origins the relay is served at, the canonical one first: a link starts with the one whose host was reached, or else the canonical one. Empty for the origin as reached, which trusts the Host header.";
+    };
     minFree = lib.mkOption {
       type = lib.types.nullOr lib.types.ints.unsigned;
       default = 5 * 1024 * 1024 * 1024;
@@ -44,6 +50,9 @@ in {
       }
       // lib.optionalAttrs (cfg.access != null) {
         AGENTWIRE_ACCESS = cfg.access;
+      }
+      // lib.optionalAttrs (cfg.origins != []) {
+        AGENTWIRE_ORIGINS = lib.concatStringsSep "," cfg.origins;
       }
       // lib.optionalAttrs (cfg.minFree != null) {
         AGENTWIRE_MIN_FREE = toString cfg.minFree;
