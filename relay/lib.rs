@@ -126,6 +126,16 @@ pub struct Options {
     pub origins: Vec<String>,
 }
 
+/// What a join under a name does to whoever holds it.
+enum Claim {
+    /// Nothing: the name is free, or its holder keeps it.
+    Nothing,
+    /// Takes the name back: its holder leaves.
+    TakeBack,
+    /// Joins as its holder, whose own part of the link this is.
+    Share(String),
+}
+
 pub struct Relay {
     sessions: Mutex<Sessions>,
     limits: Mutex<Limits>,
@@ -234,37 +244,44 @@ impl Relay {
         }
     }
 
-    /// Whether `account`, which the access service vouched for on a join under
-    /// `name`, takes the name back from whoever holds it: where the name is the
-    /// account's, from a holder of no account or another one, or of the same
-    /// one that left, is no longer live, or whose own token is refused now.
-    /// A live holder of the same account keeps it, such as another agent on the
-    /// same machine.
-    async fn takes_back(
+    /// What a join under `name` by `account`, which the access service vouched
+    /// for, does to whoever holds it. Where the name is the account's, it takes
+    /// it back from a holder of no account or another one, or of the same one
+    /// that left, is no longer live, or whose own token is refused now.
+    /// A live holder of the same account keeps it: under `<account>/<agent>`,
+    /// such as another agent on the same machine, while under the bare account
+    /// it is the same person on another device, who gets the holder's own link.
+    async fn claim(
         &self,
         access: &Access,
         session: &str,
         name: &str,
         account: &str,
-    ) -> Result<bool, Fail> {
+    ) -> Result<Claim, Fail> {
         let own = name == account
             || name
                 .strip_prefix(account)
                 .is_some_and(|rest| rest.starts_with('/'));
         let Some(holder) = self.sessions().holder(session, name)? else {
-            return Ok(false);
+            return Ok(Claim::Nothing);
         };
         if !own {
-            return Ok(false);
+            return Ok(Claim::Nothing);
         }
         if holder.account.as_deref() != Some(account) || !holder.inside || !holder.live {
-            return Ok(true);
+            return Ok(Claim::TakeBack);
         }
         let owned = self.sessions().owned(session)?;
-        Ok(matches!(
-            access.ask(session, name, holder.kept.credential(), owned).await,
-            Err(refused) if refused.status == StatusCode::FORBIDDEN
-        ))
+        Ok(
+            match access
+                .ask(session, name, holder.kept.credential(), owned)
+                .await
+            {
+                Err(refused) if refused.status == StatusCode::FORBIDDEN => Claim::TakeBack,
+                _ if name == account => Claim::Share(holder.secret),
+                _ => Claim::Nothing,
+            },
+        )
     }
 
     /// Lets whoever presents `token`, if anything, read the session without joining it, if
@@ -643,12 +660,23 @@ async fn session(
                 let client = client.map(|client| client.acting_for(account.as_deref()));
                 relay.adds(client.as_ref(), 0)?;
             }
-            let take_back = match (&relay.access, name.as_deref(), account.as_deref()) {
+            let claim = match (&relay.access, name.as_deref(), account.as_deref()) {
                 (Some(access), Some(name), Some(account)) => {
-                    relay.takes_back(access, id, name, account).await?
+                    relay.claim(access, id, name, account).await?
                 }
-                _ => false,
+                _ => Claim::Nothing,
             };
+            // The same person again, as on another device: one participant,
+            // which the token presented now vouches for, as on joining again.
+            if let Claim::Share(secret) = claim {
+                relay
+                    .sessions()
+                    .vouch(id, &secret, &kept, account.as_deref())?;
+                let me = format!("{link}/{secret}");
+                let joined = relay.sessions().rejoin(id, &secret, &me)?;
+                return Ok(json(&agentwire::Joined { about, ..joined }));
+            }
+            let take_back = matches!(claim, Claim::TakeBack);
             let joined = relay.sessions().join(
                 id,
                 name.as_deref(),

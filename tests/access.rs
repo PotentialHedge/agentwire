@@ -366,6 +366,45 @@ async fn an_account_takes_its_names_back() {
 }
 
 #[tokio::test]
+async fn one_person_on_two_devices_is_one_participant() {
+    let (stub, relay) = world().await;
+    stub.tokens
+        .lock()
+        .unwrap()
+        .insert("t-phone".into(), "luis".into());
+    let client = Client::new();
+    let link = client.create(&relay).await.unwrap();
+    let mac = client.join(&link, "luis", Some("t-luis")).await.unwrap();
+    client
+        .send(&mac.link, "text/plain", None, "From the Mac.")
+        .await
+        .unwrap();
+
+    // The same account under its bare name gets the holder's own link.
+    let phone = client.join(&link, "luis", Some("t-phone")).await.unwrap();
+    assert_eq!(phone.link, mac.link);
+    assert_eq!(phone.n, mac.n);
+    let now = Receive {
+        wait: Some(Duration::ZERO),
+        ..Receive::default()
+    };
+    let received = client.receive(&phone.link, &now).await.unwrap();
+    assert_eq!(received.presence.len(), 1);
+
+    // Anyone else still finds it taken.
+    let taken = client.join(&link, "luis", None).await.unwrap_err();
+    assert_eq!(taken.status(), Some(409));
+
+    // The token presented last vouches for it, so revoking the Mac's leaves it in.
+    stub.tokens.lock().unwrap().remove("t-luis");
+    tokio::time::sleep(Duration::from_secs(6)).await;
+    client
+        .send(&mac.link, "text/plain", None, "From the phone.")
+        .await
+        .unwrap();
+}
+
+#[tokio::test]
 async fn an_entry_keeps_the_account_its_sender_had() {
     let (_, relay) = world().await;
     let client = Client::new();
