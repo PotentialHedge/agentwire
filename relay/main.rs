@@ -1,5 +1,5 @@
 //! The agentwire relay as a program: it listens at `AGENTWIRE_ADDRESS`, by default
-//! 127.0.0.1:8790, and keeps its sessions in the database at
+//! 127.0.0.1:8790, says on stderr where it listens, and keeps its sessions in the database at
 //! `AGENTWIRE_DATABASE`, or in memory without one. It serves the spec and the
 //! script from the directory `AGENTWIRE_FILES`, by default the working directory,
 //! as the repository's root is for `just dev`. With `AGENTWIRE_ACCESS`, it asks
@@ -43,6 +43,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
     })?;
     tokio::spawn(relay.clone().expire());
     let listener = TcpListener::bind(&address).await?;
+    // With port 0 the system picks one, which whoever started it reads here.
+    eprintln!("listening on {}", listener.local_addr()?);
     let router = relay.router();
     axum::serve(
         listener,
