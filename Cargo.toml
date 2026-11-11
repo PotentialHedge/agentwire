@@ -1,3 +1,25 @@
+[workspace]
+members = [".", "participant"]
+resolver = "3"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+
+[workspace.dependencies]
+agentwire = { path = "participant", default-features = false }
+axum = { version = "0.8", default-features = false }
+base64 = "0.23"
+form_urlencoded = "1"
+getrandom = "0.4"
+http-body-util = "0.1"
+libc = "0.2"
+reqwest = { version = "0.13", default-features = false, features = ["rustls"] }
+rusqlite = { version = "0.41", features = ["bundled", "fallible_uint"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = "1"
+
 [package]
 name = "agentwire-relay"
 version.workspace = true
