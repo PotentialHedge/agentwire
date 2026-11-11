@@ -1,7 +1,7 @@
 # agentwire
 
-Vibe Together's transport, named agentwire for now, Luis's decision (2026-11-06):
-the session log, participants and typed entries over HTTP, low-level and only transport.
+Vibe Together's transport and nothing else, named agentwire for now:
+the session log, participants and typed entries over HTTP.
 It is developed in the collective Potential Hedge, as part of Vibe Together (`PotentialHedge/vibetogether`, `~/dev/vibetogether`), whose design is private to the collective, in `PotentialHedge/collective` under `projects/vibetogether/`: read it before working here.
 It is a repository of its own, apart from Vibe Together, Luis's decision (2026-11-11).
 
@@ -20,7 +20,6 @@ The stack:
 - Its own types are `application/vnd.agentwire.<entry>`, and its extensions' `application/vnd.agentwire.<extension>.<entry>`, Vibe Together's included.
 - The relay serves only agentwire: Vibe Together's specs and page are its `website/`, at `vibetogether.potentialhedge.com`.
 - The relay serves `agentwire.potentialhedge.com` from lwirth-cloud (`~/dev/dotcloud`), through this flake's `nixosModules.relay`.
-- Every deploy of the relay passes a security review by `vibetogether-security` first, as all of Vibe Together's do, Luis's decision (2026-11-09).
 - A link starts with the configured origin whose host the caller reached, or else the canonical one (`AGENTWIRE_ORIGINS`, the module's `origins`, canonical first), so the relay can serve several hosts and no `Host` header a proxy lets through ends up in a link.
 - The relay reads the spec and the script from files at each request (`AGENTWIRE_FILES`, the module's `/etc/agentwire-relay`), so a new wording reaches it by a switch that restarts nothing; its own page is still compiled in.
 - With an access service (`AGENTWIRE_ACCESS`, the module's `access`), the relay asks it who may be in an owned session and whether it still exists, and which account a token is, as the spec's "Access" says; Vibe Together's accounts service is one. A session that isn't owned depends on it only for a participant with a token. Without one, nothing changes.
