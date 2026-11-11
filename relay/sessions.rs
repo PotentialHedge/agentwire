@@ -197,8 +197,6 @@ impl Kept {
 
 /// Whoever holds a name, as a join under it finds them.
 pub struct Holder {
-    /// Its own part of its link.
-    pub secret: String,
     pub inside: bool,
     pub kept: Kept,
     pub account: Option<String>,
@@ -567,12 +565,11 @@ impl Sessions {
             .db
             .prepare_cached(
                 "SELECT inside, token, account,
-                        since > strftime('%Y-%m-%dT%H:%M:%SZ', 'now', ?3), grant, secret
+                        since > strftime('%Y-%m-%dT%H:%M:%SZ', 'now', ?3), grant
                  FROM participants WHERE session = ?1 AND name = ?2",
             )?
             .query_row(params![session, name, format!("-{LIVE} seconds")], |row| {
                 Ok(Holder {
-                    secret: row.get(5)?,
                     inside: row.get(0)?,
                     kept: Kept {
                         token: row.get(1)?,

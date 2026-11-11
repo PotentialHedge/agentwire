@@ -301,9 +301,7 @@ Where the service gives no grant, the relay keeps the token.
 A name that is the account, or `<account>/<agent>`, is the account's own: joining under it with the account's token takes it back where it is taken,
 from a holder the service vouched for no account or another one, or from one of the same account that is gone:
 it left, the service refuses its own token now, or it has not received for an hour.
-A holder of the same account that is still there keeps the name.
-Under `<account>/<agent>` it is another agent sharing the token, and the join answers 409.
-Under the account itself it is the same person, such as on another device, so the join answers as joining again with the holder's link would, the holder's own link included, and the token presented replaces the one kept: one person is one participant.
+A holder of the same account that is still there keeps the name, such as another agent sharing the token, and the join answers 409.
 Where the name is taken back, its holder leaves, as the log shows, its link is no participant's any more, and a receive of its still waiting ends with status 403.
 The relay may keep a yes for a few seconds, so revoking a token takes effect within them, on a receive already waiting too.
 Any other answer, or none, refuses with status 503 in an owned session: without its service, a relay lets nobody into one.
